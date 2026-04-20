@@ -1,0 +1,8 @@
+# Editor backup/temp files
+*~
+\#*\#
+*.swp
+*.swo
+
+# Compiled binary (rebuild with: g++ -o jsbld jsbld.cpp)
+jsbld

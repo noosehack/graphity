@@ -1,0 +1,122 @@
+#!/bin/bash
+
+RED="\033[0;31m"
+BLU="\033[0;34m"
+GRN="\033[0;32m"
+CYN="\033[0;36m"
+NC="\033[0m"
+
+help=false; outfile=out.html; filein=datatest.csv; ylabel="level"; title="Graphity"; source="source: Bloomberg"; rebase=false; maxis=false; stats=false; name="gph1"; ninit=false;
+width=0.8; height=0.5; # h is 0.5 as a measure of width (better if we have a scrollable page div sizing may break everything otherwise
+
+hlp="\n${RED}**************** GRAPHITYR HELPER ********************${NC}\n\n${CYN}general options
+:\n -fi or none: csv input to plot\n -nm or --name: for the name of the graphity (important if multi graphity)\n -t or --title: for the main title of the graphity, none will result in tilted upward graph\n -src or --source: source of the graphity\n -w or --width: width ratio of the graphity [DEFAULT 0.8]\n -h or --height: height ratio as of width [DEFAULT 0.5 (0.5*w)] --rebase or --rb: rebased or not\n --maxis or --mx: multiple axis graphity\n --stat or --summary: statistics for the timeseries plotted (assume daily series for now)\n -n or --no-init or -nini: when d3 and graphity are already included in the page\n\n${GRN}example:\n graphityr -fi test.csv --rb --stat${NC}\n"
+
+while [[ $# -ge 1 ]]
+do
+opt="$1"
+case $opt in
+-\?|--help)
+help=true; shift; break
+;;
+-fi|--input)
+if [ -n "$2" ]; then
+tmp=$(mktemp) && cat <"$2" > "$tmp"; shift 2;
+else
+printf 'ERROR: "-fi|--input" requires an option argument.\n' >&2
+exit 1
+fi
+;;
+-t|--title|-fi)
+title=$2;shift 2;
+;;
+-nm|--name)
+name=$2;shift 2;
+;;
+-n|--no-init|-nini)
+ninit=true;shift;
+;;
+-w|--width)
+width=$2;shift 2;
+;;
+-h|--height)
+height=$2;shift 2;
+;;
+-src|--source|--src)
+source=$2;shift 2;
+;;
+--rebase|--rbs|--rebased|--rbsd|--rb|-rb)
+rebase=true; shift
+;;
+--maxis|--mxs|--multiaxis|--mx|-mx)
+maxis=true; shift
+;;
+--stat|--stats|--summary|--statistics)
+stats=true; shift
+;;
+*)
+tmp=$(mktemp) && cat <"$2" > "$tmp"; shift 2;
+;;
+esac
+done
+
+
+# IN CSVTO RAZOR CREATE AND ALERT IF THERE ARE NAs
+
+function trans(){
+mawk -F";" '{for(j=1;++j<=NF;)a[NR,j]=$j}END{for(j=1;++j<=NF;){for(i=1;++i<=NR;){printf a[i,j];if(i==NR) printf "],["; else printf ","} }}' $1
+}
+
+#change a csvfile to a razr object named after filename
+function csvtorazr(){
+echo "var $(echo $1 | sed 's/.csv//')"d="new razr(["$(sed -e 's/[^;]*;//1' $1 | sed 1d | tr -d '\015' | tr ';\n' ',' | sed 's/.$/],/')"[['"$(mawk -F';' -vORS="','" '$1!~"ate"{print $1}' $1 | sed -e "s/,'$//g")"],"$(head -1 $1 | tr -d '\015' | tr ";" "," | sed -e "s/[^,]*,/['/1" -e "s/,/','/g")"']]);"
+}
+
+function csvtobldbu(){
+# catch process substitution if it occurs
+tmp=$(mktemp) && cat <"$1" > "$tmp";
+# get dimnames
+cn="['"$(cut -d';' -f2- <(head -1 <(cat <"$tmp"))| sed s/\;/\',\'/g)"']";
+rn="['"$(paste -s -d';' <(cut -d';' -f1 <(cat <"$tmp") | sed 1d) | sed s/\;/\',\'/g)"']"
+# object
+echo -e "var $2dt={rn:$rn,cn:$cn,vec:[["$(trans <"$tmp" | sed -e "s/\,\[$/\]/g")"};";
+}
+
+function csvtobld(){
+# catch process substitution if it occurs
+tmp=$(mktemp) && cat <"$1" > "$tmp";
+# get dimnames
+echo -n "var $2dt="
+~/graphity/localgraphitysrc/jsbld -fi $tmp -nm $2
+}
+
+if [ $help = false ]; then
+calib="var ww=window.innerWidth*"$width";\nvar wh=Math.round("$height"*ww);";
+data="<script>"$(csvtobld <(cat $tmp) "$name")"</script>"
+# data="<script>"$(csvtobldbu <(cat $tmp) "$name")"</script>"
+
+if [ $ninit = false ]; then
+style="svg{background-color:#ffffff}
+.line{fill:none}\n.line2{fill:none}
+input[type=checkbox]{display:none}
+input[type=checkbox]:checked+label:before{content:\"\2611\";margin-right:3px; }
+input[type=checkbox]+label:before{content:\"\2610\";margin-right:3px; }
+.axis path,.axis line{fill:white;fill-opacity:0;shape-rendering:crispEdges;}
+.brush{stroke:#fff;fill:navy;fill-opacity:.125;shape-rendering: crispEdges;}
+.zoom{cursor:move;fill:none;pointer-events:all;}";
+
+d3="$(cat ~/graphity/localgraphitysrc/d3.v4.min.js|tr -d '\r')"
+gpty="$(cat ~/graphity/localgraphitysrc/graphityrv4.js)"
+
+echo -e "<style>""$style""</style>"
+echo "<script>""$d3""</script>"
+echo "<script>""$gpty""</script>"
+fi
+
+echo -e "<script>if(document.getElementsByTagName('body')[0]==undefined){ var bod=document.createElement('body'); document.documentElement.appendChild(bod); };</script>"
+echo -e "\n""$data"
+echo -e "<script>""$calib""</script>"
+echo -e "<script>graphity('"$name"',"$name"dt,ww,wh,'"$title"','"$source"',"$rebase","$maxis","$stats")</script>\n"
+
+rm -rf $tmp
+else echo -e $hlp; fi
