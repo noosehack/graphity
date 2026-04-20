@@ -1,6 +1,6 @@
 function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 
-     var gosum=false;
+     var gosum=false; var goeql252=false;
      
     // LIST OF IMPROVEMENTS
     //
@@ -124,8 +124,10 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 
      var devmode=true;
      if(devmode){
-	 d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","sm-"+name).on("click",function(){ gosum=!gosum; graphit(st,ed,true,true); });
+	 d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","sm-"+name).on("click",function(){ gosum=!gosum; if(gosum&&!rbsd){ rbsd=true; d3.select("#rb-"+name).property("checked",true); } graphit(st,ed,true,true); });
 	 d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("sum | ").attr("for","sm-"+name);
+	 d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","eq252-"+name).on("click",function(){ goeql252=!goeql252; if(goeql252&&!rbsd){ rbsd=true; d3.select("#rb-"+name).property("checked",true); } graphit(st,ed,true,true); });
+	 d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("eql_252 | ").attr("for","eq252-"+name);
      }
      
     d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box").attr("id","st-"+name).on("click",function(){ stats=!stats; graphit(st,ed,false,true);  });
@@ -211,6 +213,57 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 		      lst[j]=100*bld.vec[j][ied]/bld.vec[j][ist]; mx2[j]=lmx;mn2[j]=lmn; }
 	    else{ mx[j]=lmx;mn[j]=lmn;lst[j]=bld.vec[j][ied]; if(init){ mx2[j]=lmx; mn2[j]=lmn; } }// prev should only be maxis or not otherwise no redraw (only computed on full domain)
 	}
+	// equal-weight average return series (when gosum is on)
+	var sumvec,sumlst,summn,summx;
+	if(gosum){
+	    sumvec=new Array((ied-ist)+1); sumvec[0]=100; var nvis=0;
+	    for(var k=0;k<ids.length;k++) if(viss[k]) nvis++;
+	    if(nvis>0){
+		for(var i=ist+1;i<=ied;i++){
+		    var avgret=0;
+		    for(var k=0;k<ids.length;k++) if(viss[k]) avgret+=(bld.vec[k][i]/bld.vec[k][i-1]-1);
+		    avgret/=nvis; sumvec[i-ist]=sumvec[i-ist-1]*(1+avgret);
+		}
+		summn=sumvec[0]; summx=sumvec[0];
+		for(var i=0;i<sumvec.length;i++){ if(sumvec[i]<summn) summn=sumvec[i]; if(sumvec[i]>summx) summx=sumvec[i]; }
+		sumlst=sumvec[sumvec.length-1];
+	    }
+	}
+	// risk parity (252d rolling vol) average return series
+	var eql252vec,eql252mn,eql252mx;
+	if(goeql252){
+	    var nvis=0; for(var k=0;k<ids.length;k++) if(viss[k]) nvis++;
+	    if(nvis>0){
+		var lkb=252,gist=Math.max(0,ist-lkb);
+		// precompute rolling vol for each visible series from gist to ied
+		var rvol=new Array(ids.length);
+		for(var k=0;k<ids.length;k++){
+		    if(!viss[k]) continue;
+		    rvol[k]=new Array(ied+1);
+		    var sx=0,sx2=0,cnt=0;
+		    for(var i=gist+1;i<=ied;i++){
+			var r=bld.vec[k][i]/bld.vec[k][i-1]-1; sx+=r; sx2+=r*r; cnt++;
+			if(cnt>lkb){ var oldr=bld.vec[k][i-lkb]/bld.vec[k][i-lkb-1]-1; sx-=oldr; sx2-=oldr*oldr; cnt--; }
+			if(cnt>1) rvol[k][i]=Math.sqrt(252*(sx2-(sx*sx/cnt))/(cnt-1)); else rvol[k][i]=1;
+			if(rvol[k][i]<0.001) rvol[k][i]=0.001;
+		    }
+		}
+		eql252vec=new Array((ied-ist)+1); eql252vec[0]=100;
+		for(var i=ist+1;i<=ied;i++){
+		    var invVolSum=0;
+		    for(var k=0;k<ids.length;k++) if(viss[k]) invVolSum+=1/rvol[k][i];
+		    var portret=0;
+		    for(var k=0;k<ids.length;k++){
+			if(!viss[k]) continue;
+			var r=bld.vec[k][i]/bld.vec[k][i-1]-1;
+			portret+=((1/rvol[k][i])/invVolSum)*r;
+		    }
+		    eql252vec[i-ist]=eql252vec[i-ist-1]*(1+portret);
+		}
+		eql252mn=eql252vec[0]; eql252mx=eql252vec[0];
+		for(var i=0;i<eql252vec.length;i++){ if(eql252vec[i]<eql252mn) eql252mn=eql252vec[i]; if(eql252vec[i]>eql252mx) eql252mx=eql252vec[i]; }
+	    }
+	}
 	// re-arrange y axis ticks to have a tick on the x axis and one tick at the end of the axis
 	var ymgn=1.00002;// margin above max (yscale domain + 6%) to avoid having lines too close to the top or cut by clip path
 
@@ -280,8 +333,9 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 	    yscl=d3.scaleLinear().range([h,0]), yAxis=d3.axisLeft(yscl).ticks(8).tickSize(0);// setup y axis
 
 	    // we manually compute the max and min for those to avoid the invisible series
-	    //var mmn=d3.min(mn),mmx=d3.max(mx);
 	    var mmn,mmx,mminit=false; for(var l=0;l<ids.length;++l){ if(viss[l]){ if(mminit){ if(mmn>mn[l]) mmn=mn[l]; if(mmx<mx[l]) mmx=mx[l]; }else{ mmn=mn[l];mmx=mx[l];mminit=true; } }  };
+	    if(gosum && summn!=undefined){ if(summn<mmn) mmn=summn; if(summx>mmx) mmx=summx; }
+	    if(goeql252 && eql252mn!=undefined){ if(eql252mn<mmn) mmn=eql252mn; if(eql252mx>mmx) mmx=eql252mx; }
 	    
 	    // when rbsd we want 100 to be a perfect 100, not 100.07 or 100.007, so we need to round the closest tick to 100 there is, but not the others to keep a proper scale
 	    var tksd=d3.range(mmn,ymgn*mmx,(ymgn*mmx-mmn)/8);// tick domain/range
@@ -298,7 +352,17 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 		    mline[k]=d3.line().x(function(idx){ return xscl(dates[idx]); }).y(function(idx){ if(rbsd) return yscl(100*bld.vec[k][idx]/bld.vec[k][ist]); else return yscl(bld.vec[k][idx]); });
 		    focus.append("path").attr("class","line").attr("id","ln-"+name+"-"+k).style("stroke",colors[k]).style("stroke-width",2).attr("d",mline[k](subst));// draw lines
 		}
-	    }	    
+	    }
+	    // equal-weight average line
+	    if(gosum && sumvec!=undefined){
+		var sumline=d3.line().x(function(d,i){ return xscl(dates[ist+i]); }).y(function(d){ return yscl(d); });
+		focus.append("path").attr("class","line").attr("id","ln-"+name+"-sum").style("stroke",wht).style("stroke-width",3).style("stroke-dasharray","8,4").attr("d",sumline(sumvec));
+	    }
+	    // risk parity 252d line
+	    if(goeql252 && eql252vec!=undefined){
+		var eqlline=d3.line().x(function(d,i){ return xscl(dates[ist+i]); }).y(function(d){ return yscl(d); });
+		focus.append("path").attr("class","line").attr("id","ln-"+name+"-eql252").style("stroke",ylw).style("stroke-width",3).style("stroke-dasharray","12,4").attr("d",eqlline(eql252vec));
+	    }
 	    // drawing the axis in main graph area (focus) then context graph area (prev)
 	    focus.append("g").attr("class", "axis-y").call(yAxis);
 	    focus.select(".axis-y").selectAll(".tick text").style("fill",cynd).style("font-family",fontax).style("font-size",faxylab);
@@ -388,42 +452,43 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 	    }else svg.append("text").attr("class","stinfo-"+name).attr("x",margin.left).attr("y",.96*(margin2.top+h2+margin2.bottom)).text("warning: not enough data to compute stats").style("font-family",fontg).style("fill",cyn); //.style("font-size",paxylab)
 	}
 
-	// ##################### LEGEND SETTER (on brush end is not nice)
-	ids.forEach(function(id,i){ lgds[i]={"id":id,"ix":i,"lp":lst[i],"p":prf[i],"v":volat[i],"m":mddw[i],"u":mduw[i],"s":shrp[i] }; }); function stord(x,y){ return y.lp - x.lp; } lgds.sort(stord); //sort
+	// ##################### LEGEND SETTER (right-side vertical list, sorted by performance)
+	ids.forEach(function(id,i){ lgds[i]={"id":id,"ix":i,"lp":lst[i],"p":prf[i],"v":volat[i],"m":mddw[i],"u":mduw[i],"s":shrp[i] }; }); function stord(x,y){ return y.lp - x.lp; } lgds.sort(stord);
+
+	d3.select("#legdv-"+name).remove();
+	var legdv=d3.select("#"+name+"-dv").append("div").attr("id","legdv-"+name)
+	    .style("position","absolute").style("top",margin.top+"px").style("left",(margin.left+w+10)+"px")
+	    .style("max-height",(h+h2+margin.bottom)+"px").style("overflow-y","auto")
+	    .style("font-family",fontg).style("font-size",Math.max(ratio*11,9)+"px");
 
 	ids.forEach(function(id,i){
-	    svg.append("text").attr("class","leg").attr("id","lg-"+name+"-"+lgds[i].ix)
-		.attr("x",function(){ if(ids.length>5) return (margin.left*1.1); else return (i*w+margin.left*8)/ids.length; })
-		.attr("y",function(){ if(ids.length>5) return (i*20*(ratio*1.1)+(.5*margin.top)+legofst); else return (.13*h)+legofst; })
-		.text(function(){ if(ids.length>5) if(stats) return lgds[i].id+' ('+Math.round(lgds[i].lp*10)/ 10+'): '+Math.round(100*lgds[i].p)/100+'% | '+Math.round(lgds[i].v*100)/100+'% | '+Math.round(100*lgds[i].s)/100+' | '+Math.round(lgds[i].m*100*100)/100+'% | '+Math.round(lgds[i].u*100*100)/100+'% | '+Math.round(100*100*lgds[i].m/lgds[i].v)/100; else return lgds[i].id+' ('+Math.round(lgds[i].lp*10)/ 10+')'; else return lgds[i].id+' ('+Math.round(lgds[i].lp*10)/ 10+')'; })
-		.style("fill",function(){ if(ids.length>5) return colors[lgds[i].ix]; else return cyn; }).style("font-size",leglab).style("font-family",fontg).style("opacity",function(){ if(viss[lgds[i].ix]) return 1; else return .4; })
-		.on("mouseover",function(){
-		    svg.selectAll(".mdlab-"+name).style("opacity",.2); svg.select("#lbarw-"+name+"-"+lgds[i].ix).style("opacity",1)
-		    focus.selectAll(".mdarr-"+name).style("opacity",.2); focus.select("#larw-"+name+"-"+lgds[i].ix).style("opacity",1).style("stroke-width",3);//.style("stroke",ylw);
-		    svg.selectAll(".mdulab-"+name).style("opacity",.2); svg.select("#lbaruw-"+name+"-"+lgds[i].ix).style("opacity",1)
-		    focus.selectAll(".mduarr-"+name).style("opacity",.2); focus.select("#laruw-"+name+"-"+lgds[i].ix).style("opacity",1).style("stroke-width",3);//.style("stroke",ylw
-		    svg.selectAll(".mddurlab-"+name).style("opacity",.2); svg.select("#lddur-"+name+"-"+lgds[i].ix).style("opacity",1);
-		    focus.selectAll(".line").style("opacity",.2); focus.select("#ln-"+name+"-"+lgds[i].ix).style("stroke-width",4).style("opacity",1);
-		    focus.selectAll(".rec2-"+name).style("opacity",.2); focus.selectAll(".rec-"+name).style("opacity",.2);
-		    focus.select("#cttr-"+name+"-"+lgds[i].ix).style("opacity",.6);
-		    svg.selectAll(".ttrlab-"+name).style("opacity",.2); svg.select("#lttr-"+name+"-"+lgds[i].ix).style("opacity",1);
-		})
-		.on("mouseout", function(){
-		    focus.selectAll(".mdlab-"+name).style("opacity",1);focus.selectAll(".mdarr-"+name).style("opacity",1);svg.selectAll(".mdlab-"+name).style("opacity",1);
-		    svg.selectAll(".mddurlab-"+name).style("opacity",1);
-		    focus.selectAll(".line").style("opacity",1); focus.select("#ln-"+name+"-"+lgds[i].ix).style("stroke-width",2);
-		    focus.select("#larw-"+name+"-"+lgds[i].ix).style("stroke-width",2);
-		    focus.selectAll(".rec2-"+name).style("opacity",1); focus.selectAll(".rec-"+name).style("opacity",.4); svg.selectAll(".ttrlab-"+name).style("opacity",1);
-		})
-		.on("click",function(){ viss[lgds[i].ix]=!viss[lgds[i].ix]; svg.selectAll(".ttrlab-"+name).remove();focus.selectAll(".pan").remove(); graphit(ist,ied,false,true); }); // redraw with new viss table
-	    
-	    if(ids.length<=5)
-		svg.append("line").attr("class","legl").attr("id","lgl-"+name+"-"+lgds[i].ix).style("stroke-width",3).style("stroke",colors[lgds[i].ix])
-		.style("opacity",function(){ if(viss[lgds[i].ix]) return 1; else return .3; })
-		.attr("x1",(i*w+margin.left*8)/ids.length).attr("y1",.15*h+legofst).attr("x2",(i*w+margin.left*10)/ids.length).attr("y2",.15*h+legofst);
-	    // summary info lines
-	    if(stats && ids.length<=5) svg.append("text").attr("class","stinfo-"+name).attr("x",(i*w+margin.left*8)/ids.length).attr("y",(.2*h)+legofst).text(Math.round(100*lgds[i].p)/100+'% | '+Math.round(lgds[i].v*100)/100+'% | '+Math.round(100*lgds[i].s)/100+' | '+Math.round(lgds[i].m*100*100)/100+'% | '+Math.round(lgds[i].u*100*100)/100+'% | '+Math.round(100*100*lgds[i].m/lgds[i].v)/100).style("font-family",fontg).style("font-size",leglab).style("fill",cyn);
+	    var row=legdv.append("div").attr("id","lgr-"+name+"-"+lgds[i].ix).style("padding","2px 4px").style("cursor","pointer")
+		.style("opacity",function(){ return viss[lgds[i].ix]?1:.4; }).style("white-space","nowrap");
+	    row.append("span").style("display","inline-block").style("width","10px").style("height","10px")
+		.style("background",colors[lgds[i].ix]).style("margin-right","5px").style("vertical-align","middle");
+	    var ltxt=lgds[i].id+' ('+Math.round(lgds[i].lp*10)/10+')';
+	    if(stats && prf[lgds[i].ix]!=undefined) ltxt=lgds[i].id+' ('+Math.round(lgds[i].lp*10)/10+'): '+Math.round(100*lgds[i].p)/100+'% | '+Math.round(lgds[i].v*100)/100+'% | '+Math.round(100*lgds[i].s)/100+' | '+Math.round(lgds[i].m*100*100)/100+'%';
+	    row.append("span").text(ltxt).style("color",colors[lgds[i].ix]);
 
+	    row.on("mouseover",function(){
+		svg.selectAll(".mdlab-"+name).style("opacity",.2); svg.select("#lbarw-"+name+"-"+lgds[i].ix).style("opacity",1);
+		focus.selectAll(".mdarr-"+name).style("opacity",.2); focus.select("#larw-"+name+"-"+lgds[i].ix).style("opacity",1).style("stroke-width",3);
+		svg.selectAll(".mdulab-"+name).style("opacity",.2); svg.select("#lbaruw-"+name+"-"+lgds[i].ix).style("opacity",1);
+		focus.selectAll(".mduarr-"+name).style("opacity",.2); focus.select("#laruw-"+name+"-"+lgds[i].ix).style("opacity",1).style("stroke-width",3);
+		svg.selectAll(".mddurlab-"+name).style("opacity",.2); svg.select("#lddur-"+name+"-"+lgds[i].ix).style("opacity",1);
+		focus.selectAll(".line").style("opacity",.2); focus.select("#ln-"+name+"-"+lgds[i].ix).style("stroke-width",4).style("opacity",1);
+		focus.selectAll(".rec2-"+name).style("opacity",.2); focus.selectAll(".rec-"+name).style("opacity",.2);
+		focus.select("#cttr-"+name+"-"+lgds[i].ix).style("opacity",.6);
+		svg.selectAll(".ttrlab-"+name).style("opacity",.2); svg.select("#lttr-"+name+"-"+lgds[i].ix).style("opacity",1);
+	    })
+	    .on("mouseout",function(){
+		focus.selectAll(".mdlab-"+name).style("opacity",1);focus.selectAll(".mdarr-"+name).style("opacity",1);svg.selectAll(".mdlab-"+name).style("opacity",1);
+		svg.selectAll(".mddurlab-"+name).style("opacity",1);
+		focus.selectAll(".line").style("opacity",1); focus.select("#ln-"+name+"-"+lgds[i].ix).style("stroke-width",2);
+		focus.select("#larw-"+name+"-"+lgds[i].ix).style("stroke-width",2);
+		focus.selectAll(".rec2-"+name).style("opacity",1); focus.selectAll(".rec-"+name).style("opacity",.4); svg.selectAll(".ttrlab-"+name).style("opacity",1);
+	    })
+	    .on("click",function(){ viss[lgds[i].ix]=!viss[lgds[i].ix]; svg.selectAll(".ttrlab-"+name).remove();focus.selectAll(".pan").remove(); graphit(ist,ied,false,true); });
 	});
 
 	// MOUSE TRACKER (on brush end)
