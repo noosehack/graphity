@@ -162,6 +162,12 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
     
     // parsing dates for both xaxis + setting up the scales and axis 
     var prsdt=d3.timeParse("%Y-%m-%d");var dates=new Array(bld.rn.length); for(var i=0;i<bld.rn.length;i++) dates[i]=prsdt(bld.rn[i]);
+    // precompute running drawdown for each series (used in prev chart)
+    var ddvec=new Array(ids.length),ddmin=0;
+    for(var k=0;k<ids.length;k++){
+	ddvec[k]=new Array(bld.rn.length); var rmax=bld.vec[k][0];
+	for(var i=0;i<bld.rn.length;i++){ if(bld.vec[k][i]>rmax) rmax=bld.vec[k][i]; ddvec[k][i]=(bld.vec[k][i]/rmax)-1; if(ddvec[k][i]<ddmin) ddmin=ddvec[k][i]; }
+    }
     // legends variables
     var prf=new Array(ids.length),volat=new Array(ids.length),mddw=new Array(ids.length),mduw=new Array(ids.length),shrp=new Array(ids.length),lulu=new Array(ids.length),lgds=[],viss=[]; for(var i=0;i<ids.length;i++){ viss[i]=true;  }// legends and visible series
 
@@ -180,7 +186,7 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
     function graphit(ist,ied,init,end){
 	// First remove all the previously drawn lines
 	focus.selectAll(".line").remove(); focus.selectAll(".axis-y").remove(); focus.selectAll(".grd").remove(); svg.selectAll(".leg").remove(); svg.selectAll(".legl").remove();
-	focus.selectAll(".mdarr-"+name).remove(); svg.selectAll(".mdlab-"+name).remove(); focus.selectAll(".mduarr-"+name).remove(); svg.selectAll(".mdulab-"+name).remove();
+	focus.selectAll(".mdarr-"+name).remove(); svg.selectAll(".mdlab-"+name).remove(); focus.selectAll(".mduarr-"+name).remove(); svg.selectAll(".mdulab-"+name).remove(); svg.selectAll(".mddurlab-"+name).remove();
 	svg.selectAll(".stinfo-"+name).remove();focus.selectAll(".pan").remove();
 	svg.selectAll(".ttrlab-"+name).remove(); focus.selectAll(".rec-"+name).remove(); focus.selectAll(".rec2-"+name).remove();
 	
@@ -216,62 +222,29 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 	var myAxis=[],myscl=[],yAxis,yscl,myAxis2=[],myscl2=[],yAxis2,yscl2,mline=[],mline2=[];
 	function axisIdx(i){ if(ids.length>5){ if(i%2==0) return (w-i*.24*margin.left); else return (i-1)*.24*margin.left; }else{ if(i%2==0) return w; else return 0;} }
 
-	// ############ INIT FOR PREV REDRAW (AXIS + LINE) -> MAXIS TOGGLE
-	if(init){ // if init draw preview
-	    prev.selectAll(".line2").remove(); prev.selectAll(".grd").remove(); prev.selectAll(".axis-y2").remove(); 
-	    xscl2.domain([dates[0],dates[dates.length-1]]);// dates are sorted, no need to go with d3.domain(d3.extent(dates))
+	// ############ INIT FOR PREV REDRAW -> DRAWDOWN CHART
+	if(init){
+	    prev.selectAll(".line2").remove(); prev.selectAll(".grd").remove(); prev.selectAll(".axis-y2").remove(); prev.selectAll(".ddarea").remove();
+	    xscl2.domain([dates[0],dates[dates.length-1]]);
 
-	    // factoring with a function cyscl(i){ if(maxis) return yscl[i]; else return yscl; } and axl(i){ if(maxis) return yAxis[i]; else return yAxis; }
-	    // would make the code less clear and add a lot of if(maxis) every now and then and since we iterate on one and note the other it would be ugly
-	    if(maxis){
-		prev.selectAll(".axis-y2").remove();
-		for(var k=0;k<ids.length;k++){
-		    if(ptch.indexOf(k)!=-1){ tkn=3;tkn2=3; }else{ tkn=5;tkn2=4; }// # of ticks
-		    myscl2[k]=d3.scaleLinear().range([h2,0]); myAxis2[k]=d3.axisLeft(myscl2[k]).ticks(tkn2).tickSize(0);// size/init the scales // setup y maxis
-
-		    //when rbsd we want 100 to be a perfect 100, not 100.07 or 100.007, so we need to round the closest tick to 100 there is, but not the others to keep a proper scale
-		    var tksd2=d3.range(mn2[k],ymgn*mx2[k],(ymgn*mx2[k]-mn2[k])/tkn2);// tick domain/range	    
- 		    if(rbsd){ var opt2=100,optidx2=0;for(var i=0;i<tksd2.length;i++){ if(Math.abs(100-tksd2[i])<opt2){ opt2=Math.abs(100-tksd2[i]); optidx2=i; }}; tksd2[optidx2]=100; }
-		    
-		    // hard mgmt of ticks (this way, xaxis matches first y tick)	    
-		    myAxis2[k].tickValues(tksd2.slice(1,tksd2.length-1));  myAxis2[k].tickSizeOuter(.5); myscl2[k].domain([mn2[k],ymgn*mx2[k]]); 
-		    myAxis2[k].tickValues().forEach(function(d,i){
- 			if(i>0) prev.append("line").attr("x1",2).attr("y1",myscl2[k](d)).attr("x2",w).attr("y2",myscl2[k](d))
-			    .style("stroke",colors[k]).style("stroke-width",1.5).style("stroke-dasharray","4,7").style("opacity",.7).attr("class","grd");
-			else prev.append("line").attr("x1",0).attr("y1",myscl2[k](d)).attr("x2",w).attr("y2",myscl2[k](d))
- 			    .style("stroke",colors[k]).style("stroke-width",1.5).style("stroke-dasharray","4,7").style("opacity",.7).attr("class","grd");//xaxis
-		    });
-
-		    mline2[k]=d3.line().x(function(idx){ return xscl(dates[idx]); }).y(function(idx){ return myscl2[k](bld.vec[k][idx]); });
-		    prev.append("path").attr("class","line2").attr("id","ln2-"+name+"-"+k).style("stroke",colors[k]).style("stroke-width",2).attr("d",mline2[k](subst));
-		    
-		    if(k%2==0) myAxis2[k].tickPadding(-margin.right+margin.left*0.24); else myAxis2[k].tickPadding(margin.left-margin.right);//right axis ticks, left axis ticks 
-		    prev.append("g").attr("id", "axis-y"+name+"-"+k).attr("class","axis-y2").call(myAxis2[k]).attr("transform","translate("+axisIdx(k)+",0)");
-		    prev.select("#axis-y"+name+"-"+k).selectAll(".tick text").style("fill",colors[k]).style("font-family",fontax).style("font-size",paxylab)
-		    prev.select("#axis-y"+name+"-"+k).selectAll(".domain").style("stroke",cyn).style("stroke-width",2);
-		}
-	    }else{
-		yscl2=d3.scaleLinear().range([h2,0]),yAxis2=d3.axisLeft(yscl2).ticks(2).tickSize(0);// setup y axis
-
-		// no need for true 100 on rebase on scale 2, we don't plot rebased series
-		var mmn2=d3.min(mn2),mmx2=d3.max(mx2),tksd2=d3.range(mmn2,ymgn*mmx2,(ymgn*mmx2-mmn2)/2);// tick domain/range
-
-		yAxis2.tickSizeOuter(.5); yAxis2.tickValues(tksd2); yscl2.domain([mmn2,ymgn*mmx2]);// establish domains/range yscl2.domain([mmn2,ymgn*mmx2]);// establish domains/range
-		// draw ticks one by one
-		yAxis2.tickValues().forEach(function(d,i){
- 		    if(i>0) prev.append("line").attr("x1",2).attr("y1",yscl2(d)).attr("x2",w).attr("y2",yscl2(d)).style("stroke",cyn).style("stroke-width",1).attr("class","grd");
-		    else prev.append("line").attr("x1",0).attr("y1",yscl2(d)).attr("x2",w).attr("y2",yscl2(d)).style("stroke",cyn).style("stroke-width",.5).attr("class","grd");//xaxis
-		});
-		// define line drawer and draw
-		for(var k=0;k<ids.length;k++){
-		    mline2[k]=d3.line().x(function(idx){ return xscl(dates[idx]); }).y(function(idx){ return yscl2(bld.vec[k][idx]); });
-		    prev.append("path").attr("class","line2").attr("id","ln2-"+name+"-"+k).style("stroke",colors[k]).style("stroke-width",2).attr("d",mline2[k](subst));
-		}		
-		// drawing the axis in main graph area (focus) then context graph area (prev)
-		prev.append("g").attr("class", "axis-y2").call(yAxis2);prev.select(".axis-y2").selectAll(".tick text").style("fill",cynd).style("font-family",fontax).style("font-size",paxylab);
-		prev.select(".axis-y2").selectAll(".domain").style("stroke",cyn).style("stroke-width",2);
-
+	    yscl2=d3.scaleLinear().range([h2,0]),yAxis2=d3.axisLeft(yscl2).ticks(2).tickSize(0);
+	    var ddtkn=3,ddtksd=d3.range(ddmin,0,-ddmin/ddtkn);
+	    yAxis2.tickSizeOuter(.5); yAxis2.tickValues(ddtksd); yscl2.domain([ddmin,0]);
+	    yAxis2.tickFormat(function(d){ return Math.round(d*100)+'%'; });
+	    // 0% reference line at top
+	    prev.append("line").attr("x1",0).attr("y1",yscl2(0)).attr("x2",w).attr("y2",yscl2(0)).style("stroke",cyn).style("stroke-width",1).attr("class","grd");
+	    yAxis2.tickValues().forEach(function(d,i){
+		if(i>0) prev.append("line").attr("x1",2).attr("y1",yscl2(d)).attr("x2",w).attr("y2",yscl2(d)).style("stroke",cyn).style("stroke-width",.5).style("stroke-dasharray","4,7").attr("class","grd");
+	    });
+	    var allIdx=new Array(bld.rn.length); for(var i=0;i<bld.rn.length;i++) allIdx[i]=i;
+	    for(var k=0;k<ids.length;k++){
+		var ddarea=d3.area().x(function(idx){ return xscl2(dates[idx]); }).y0(yscl2(0)).y1(function(idx){ return yscl2(ddvec[k][idx]); });
+		prev.append("path").attr("class","ddarea").attr("id","dda-"+name+"-"+k).style("fill",colors[k]).style("opacity",.15).attr("d",ddarea(allIdx));
+		mline2[k]=d3.line().x(function(idx){ return xscl2(dates[idx]); }).y(function(idx){ return yscl2(ddvec[k][idx]); });
+		prev.append("path").attr("class","line2").attr("id","ln2-"+name+"-"+k).style("stroke",colors[k]).style("stroke-width",1.5).attr("d",mline2[k](allIdx));
 	    }
+	    prev.append("g").attr("class","axis-y2").call(yAxis2); prev.select(".axis-y2").selectAll(".tick text").style("fill",cynd).style("font-family",fontax).style("font-size",paxylab);
+	    prev.select(".axis-y2").selectAll(".domain").style("stroke",cyn).style("stroke-width",2);
 	}// end of only on init part
 	
 	// ############ FOCUS DRAW -> THE PART THAT WILL ALWAYS CHANGE (either brush move, rebase, or maxis toggle)
@@ -387,6 +360,15 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 			    //console.log("fnd?:"+fnd+",to beat:"+hpt+", higher pt:"+hgrpt+", ttr:"+dates[hpti]+":"+dates[subst[0]+mdds])
 			}
 
+			// drawdown duration label (peak to trough time)
+			var ddur=Math.ceil(Math.abs(dates[mdde+subst[0]+1].getTime()-dates[mdds+subst[0]].getTime())/(1000*3600*24)),sddur="",ddure="";
+			if(ddur>60){
+			    if(ddur>360){ if(Math.round(ddur/360)>1) ddure="s"; else ddure=""; sddur=Math.round(ddur*10/360)/10+" year"+ddure; }
+			    else{ if(Math.round(ddur/60)>1) ddure="s"; else ddure=""; sddur=Math.round(ddur*10/60)/10+" month"+ddure; }
+			}else{ if(Math.round(ddur)>1) ddure="s"; else ddure=""; sddur=Math.round(ddur*10)/10+" day"+ddure; }
+			svg.append("text").attr("class","mddurlab-"+name).attr("x",xscl(dates[mdds+subst[0]])+margin.left+5).attr("y",cyscl(i)(vls)+margin.top-10).attr("id","lddur-"+name+"-"+i)
+			    .text(sddur).style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(colors[i]).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
+
 			// mdde + 1 because computations are on dlog
 			focus.append("line").attr("class","mdarr-"+name).attr("x1",xscl(dates[mdds+subst[0]])).attr("x2",xscl(dates[mdde+subst[0]+1])).attr("id","larw-"+name+"-"+i)
 				.attr("y1",cyscl(i)(vls)).attr("y2",cyscl(i)(vle)).style("stroke",d3.color(colors[i]).brighter(brgt)).style("stroke-width",2).style("stroke-dasharray","5,5").attr("marker-end","url(#arw-"+name+"-"+i+")");
@@ -420,6 +402,7 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 		    focus.selectAll(".mdarr-"+name).style("opacity",.2); focus.select("#larw-"+name+"-"+lgds[i].ix).style("opacity",1).style("stroke-width",3);//.style("stroke",ylw);
 		    svg.selectAll(".mdulab-"+name).style("opacity",.2); svg.select("#lbaruw-"+name+"-"+lgds[i].ix).style("opacity",1)
 		    focus.selectAll(".mduarr-"+name).style("opacity",.2); focus.select("#laruw-"+name+"-"+lgds[i].ix).style("opacity",1).style("stroke-width",3);//.style("stroke",ylw
+		    svg.selectAll(".mddurlab-"+name).style("opacity",.2); svg.select("#lddur-"+name+"-"+lgds[i].ix).style("opacity",1);
 		    focus.selectAll(".line").style("opacity",.2); focus.select("#ln-"+name+"-"+lgds[i].ix).style("stroke-width",4).style("opacity",1);
 		    focus.selectAll(".rec2-"+name).style("opacity",.2); focus.selectAll(".rec-"+name).style("opacity",.2);
 		    focus.select("#cttr-"+name+"-"+lgds[i].ix).style("opacity",.6);
@@ -427,6 +410,7 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 		})
 		.on("mouseout", function(){
 		    focus.selectAll(".mdlab-"+name).style("opacity",1);focus.selectAll(".mdarr-"+name).style("opacity",1);svg.selectAll(".mdlab-"+name).style("opacity",1);
+		    svg.selectAll(".mddurlab-"+name).style("opacity",1);
 		    focus.selectAll(".line").style("opacity",1); focus.select("#ln-"+name+"-"+lgds[i].ix).style("stroke-width",2);
 		    focus.select("#larw-"+name+"-"+lgds[i].ix).style("stroke-width",2);
 		    focus.selectAll(".rec2-"+name).style("opacity",1); focus.selectAll(".rec-"+name).style("opacity",.4); svg.selectAll(".ttrlab-"+name).style("opacity",1);
