@@ -122,7 +122,7 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
     d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","mx-"+name).on("click",function(){ maxis=!maxis; graphit(st,ed,true,true); });
      d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("maxis | ").attr("for","mx-"+name);
 
-     var devmode=true; devmode=false;
+     var devmode=true;
      if(devmode){
 	 d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","sm-"+name).on("click",function(){ gosum=!gosum; graphit(st,ed,true,true); });
 	 d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("sum | ").attr("for","sm-"+name);
