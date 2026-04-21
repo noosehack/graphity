@@ -36,10 +36,10 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
     // this can be done in the bash var nm=name.split(' ').join('_');
     // IF THE DIV IS MANUALLY ADDED, WE DON'T CREATE IT (allows for styling flexibility)
     if(d3.select("#"+name).node()==null){
-	d3.select("body").append("div").attr("id",name+"-dv").style("margin-left","1em").style("margin-top","2em").style("position","relative");//position relative to place absolute objects
+	d3.select("body").append("div").attr("id",name+"-dv").style("margin-left","1em").style("margin-top","2em").style("position","relative").style("overflow","visible");
     }
     else
-	d3.select("#"+name).append("div").attr("id",name+"-dv").style("margin-left","1em").style("margin-top","2em").style("position","relative");//position relative to place absolute objects
+	d3.select("#"+name).append("div").attr("id",name+"-dv").style("margin-left","1em").style("margin-top","2em").style("position","relative").style("overflow","visible");
 
     function grptycsv(x){
 	var str='date,',nc=x.cn.length,nr=x.rn.length;
@@ -69,7 +69,8 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
     if(grn==undefined) var grn="#006600"; if(ylw==undefined) var ylw="#CC8C00"; if(blu==undefined) var blu="#002060";
     if(mag==undefined) var mag="#7BB8D9"; if(cyn==undefined) var cyn="#7F7F7F"; if(wht==undefined) var wht="#dbd7b8";
     if(bwht==undefined) var bwht="#dfdfdf";    
-    var colors=[blu,red,grn,ylw, mag,cyn,"#003893","#E2BC13","#CE1126","#7BB8D9","#800080","#778899","#B22222","#9ACD32","#FFA500","#2F4F4F","#000000","#8B008B","#C71585","#008B8B","#ADFF2F","#20B2AA","#CD853F","#C71587","#4682B4","#FA5B3D","#FF355E","#FD5B78","#FFFF66","#FF6037","#CCFF00","#FF9966","#AAF0D1","#FF9933","#50BFE6","#FF6EFF"];
+    var avgcolor="#999999",eqlcolor="#E8740C";
+    var colors=[blu,"#6A0DAD","#0097A7","#C71585","#4682B4",mag,"#20B2AA","#8B008B","#003893","#008B8B","#CD853F","#50BFE6","#2F4F4F","#9C27B0","#00838F","#5D4037","#1565C0","#6D4C41","#00695C","#7B1FA2","#0277BD","#4527A0","#00796B","#283593","#00579B","#4A148C"];
 
     var cynd=d3.hsl(cyn).darker(2);
     // put mag instead of bg and "#B7E500" for ylw
@@ -117,26 +118,19 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 	.style("top",(h+margin.bottom+margin.top/2)+"px").style("left",margin.left+"px").style("width",w+"px");
     // building the checkboxes
     d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","rb-"+name).on("click",function(){ rbsd=!rbsd; graphit(st,ed,false,true); });
-    //d3.select("#chkdv-"+name).append("input").attr("type","button").attr("class","tbox").attr("id","rb-"+name).on("click",function(){ rbsd=!rbsd; graphit(st,ed,false); }).html("&#9745;");
     d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("rebase | ").attr("for","rb-"+name);
     d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","mx-"+name).on("click",function(){ maxis=!maxis; graphit(st,ed,true,true); });
-     d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("maxis | ").attr("for","mx-"+name);
-
-     var devmode=true;
-     if(devmode){
-	 d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","sm-"+name).on("click",function(){ gosum=!gosum; if(gosum&&!rbsd){ rbsd=true; d3.select("#rb-"+name).property("checked",true); } graphit(st,ed,true,true); });
-	 d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("sum | ").attr("for","sm-"+name);
-	 d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","eq252-"+name).on("click",function(){ goeql252=!goeql252; if(goeql252&&!rbsd){ rbsd=true; d3.select("#rb-"+name).property("checked",true); } graphit(st,ed,true,true); });
-	 d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("eql_252 | ").attr("for","eq252-"+name);
-     }
-     
+    d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("maxis | ").attr("for","mx-"+name);
     d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box").attr("id","st-"+name).on("click",function(){ stats=!stats; graphit(st,ed,false,true);  });
     d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("stats | ").attr("for","st-"+name);
+    d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","sm-"+name).on("click",function(){ gosum=!gosum; if(gosum&&!rbsd){ rbsd=true; d3.select("#rb-"+name).property("checked",true); } graphit(st,ed,true,true); });
+    d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("avg | ").attr("for","sm-"+name);
+    d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","eq252-"+name).on("click",function(){ goeql252=!goeql252; if(goeql252&&!rbsd){ rbsd=true; d3.select("#rb-"+name).property("checked",true); } graphit(st,ed,true,true); });
+    d3.select("#chkdv-"+name).append("label").attr("class","lab-"+name).html("eql_252 | ").attr("for","eq252-"+name);
     d3.select("#chkdv-"+name).append("label").attr("class","rlab-"+name).html("&#10226; |").on("click",function(){ graphit(0,bld.rn.length,true,true); for(var i=0;i<ids.length;i++) viss[i]=true; prev.select(".brush").call(brush.move,null); });// reload label
      d3.select("#chkdv-"+name).append("label").attr("class","dlab-"+name).attr("download",name).html(" &#8681; ").on("click",function(){ dlx(grptycsv(bld),name); });// download
      if(rbsd) d3.select("#rb-"+name).attr("checked",""); if(maxis) d3.select("#mx-"+name).attr("checked",""); if(stats) d3.select("#st-"+name).attr("checked","");
-
-     if(devmode) if(gosum) d3.select("#sm-"+name).attr("checked","");
+     if(gosum) d3.select("#sm-"+name).attr("checked",""); if(goeql252) d3.select("#eq252-"+name).attr("checked","");
      
     // style checkboxes and labels
     //d3.selectAll(".tbox").style("font-size","1.2em").style("cursor","pointer").style("color",cyn);
@@ -356,12 +350,12 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 	    // equal-weight average line
 	    if(gosum && sumvec!=undefined){
 		var sumline=d3.line().x(function(d,i){ return xscl(dates[ist+i]); }).y(function(d){ return yscl(d); });
-		focus.append("path").attr("class","line").attr("id","ln-"+name+"-sum").style("stroke",wht).style("stroke-width",3).style("stroke-dasharray","8,4").attr("d",sumline(sumvec));
+		focus.append("path").attr("class","line").attr("id","ln-"+name+"-sum").style("stroke",avgcolor).style("stroke-width",3).style("stroke-dasharray","8,4").attr("d",sumline(sumvec));
 	    }
 	    // risk parity 252d line
 	    if(goeql252 && eql252vec!=undefined){
 		var eqlline=d3.line().x(function(d,i){ return xscl(dates[ist+i]); }).y(function(d){ return yscl(d); });
-		focus.append("path").attr("class","line").attr("id","ln-"+name+"-eql252").style("stroke",ylw).style("stroke-width",3).style("stroke-dasharray","12,4").attr("d",eqlline(eql252vec));
+		focus.append("path").attr("class","line").attr("id","ln-"+name+"-eql252").style("stroke",eqlcolor).style("stroke-width",3).style("stroke-dasharray","12,4").attr("d",eqlline(eql252vec));
 	    }
 	    // drawing the axis in main graph area (focus) then context graph area (prev)
 	    focus.append("g").attr("class", "axis-y").call(yAxis);
@@ -370,90 +364,73 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 	}
 
 	// ##################### SUMMARY COMPUTE (on brush end)
-	// also manage when a serie is removed its stats should be too (and not computed)
-	// don't compute if too small set, stats won't mean anything
+	function cyscl(i){ if(maxis) return myscl[i]; else return yscl; }
+	function fmtdur(d){ var s="",e=""; if(d>60){ if(d>360){ if(Math.round(d/360)>1) e="s"; s=Math.round(d*10/360)/10+" year"+e; }else{ if(Math.round(d/60)>1) e="s"; s=Math.round(d*10/60)/10+" month"+e; }}else{ if(Math.round(d)>1) e="s"; s=Math.round(d*10)/10+" day"+e; } return s; }
+	function computeStats(vec,len,ist_,ied_,sid,scolor,syf,mddcol){
+	    if(!mddcol) mddcol=scolor;
+	    var dlg=new Array(len),l=0,x=0,x2=0;
+	    for(var k=1;k<len;k++){ dlg[l]=(vec[k]/vec[k-1]-1); x+=dlg[l]; x2+=dlg[l]*dlg[l]; l++; }
+	    var svol=Math.sqrt(252*(x2-(x*x/len))/(len-1))*100;
+	    var sperf=(vec[len-1]/vec[0]-1)*100*(252/len);
+	    var sshrp=(252*100*x/len)/svol;
+	    var scnt=0,mdd=0,mdds=0,mdde=0,mdu=0,mdus=0,mdue=0;
+	    while(scnt<l){ var comp=dlg[scnt]; for(var j=scnt+1;j<l;j++){ if((comp+dlg[j])<mdd){ mdds=scnt;mdde=j;mdd=(comp+dlg[j]); } if((comp+dlg[j])>mdu){ mdus=scnt;mdue=j;mdu=(comp+dlg[j]); } comp+=dlg[j]; } scnt++; }
+	    var vls=vec[mdds],vle=vec[mdde+1]; var smddw=(vle/vls)-1; var vlus=vec[mdus],vlue=vec[mdue+1]; var smduw=(vlue/vlus)-1;
+	    // draw mdd/mdu arrows and labels
+	    var ddur=Math.ceil(Math.abs(dates[ist_+mdde+1].getTime()-dates[ist_+mdds].getTime())/(1000*3600*24));
+	    svg.append("text").attr("class","mddurlab-"+name).attr("x",xscl(dates[ist_+mdds])+margin.left+5).attr("y",syf(vls)+margin.top-10).attr("id","lddur-"+name+"-"+sid)
+		.text(fmtdur(ddur)).style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(mddcol).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
+	    focus.append("line").attr("class","mdarr-"+name).attr("x1",xscl(dates[ist_+mdds])).attr("x2",xscl(dates[ist_+mdde+1])).attr("id","larw-"+name+"-"+sid)
+		.attr("y1",syf(vls)).attr("y2",syf(vle)).style("stroke",d3.color(mddcol).brighter(brgt)).style("stroke-width",2).style("stroke-dasharray","5,5");
+	    focus.append("line").attr("class","mduarr-"+name).attr("x1",xscl(dates[ist_+mdus])).attr("x2",xscl(dates[ist_+mdue+1])).attr("id","laruw-"+name+"-"+sid)
+		.attr("y1",syf(vlus)).attr("y2",syf(vlue)).style("stroke",d3.color(scolor).brighter(brgt)).style("stroke-width",2).style("stroke-dasharray","5,5");
+	    svg.append("text").attr("class","mdlab-"+name).attr("x",xscl(dates[ist_+mdde+1])+margin.left-20).attr("y",syf(vle)+margin.top+20).attr("id","lbarw-"+name+"-"+sid)
+		.text(Math.round(smddw*100*100)/100+'%').style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(mddcol).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
+	    svg.append("text").attr("class","mdulab-"+name).attr("x",xscl(dates[ist_+mdue+1])+margin.left-20).attr("y",syf(vlue)+margin.top-10).attr("id","lbaruw-"+name+"-"+sid)
+		.text(Math.round(smduw*100*100)/100+'%').style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(scolor).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
+	    // time to recovery
+	    var hpt=vec[mdds],hpti=mdds,fnd=false;
+	    for(var k=mdds+1;k<len;k++) if(vec[k]>hpt){ hpti=k; fnd=true; break; }
+	    if(fnd){
+		var reccol=mddcol!=scolor?grn:scolor;
+		focus.append("circle").attr("class","rec-"+name).attr("cx",xscl(dates[ist_+hpti])).attr("cy",syf(vec[hpti])).attr("r",ratio*10).style("fill",reccol).style("opacity",.4).attr("id","cttr-"+name+"-"+sid);
+		focus.append("circle").attr("class","rec2-"+name).attr("cx",xscl(dates[ist_+hpti])).attr("cy",syf(vec[hpti])).attr("r",ratio*4).style("fill",reccol).attr("id","cttr2-"+name+"-"+sid).style("stroke",cyn);
+		var ttr=Math.ceil(Math.abs(dates[ist_+hpti].getTime()-dates[ist_+mdde].getTime())/(1000*3600*24));
+		svg.append("text").attr("class","ttrlab-"+name).attr("x",xscl(dates[ist_+hpti])+margin.left-20).attr("y",syf(vec[hpti])+margin.top-20).attr("id","lttr-"+name+"-"+sid)
+		    .text(fmtdur(ttr)).style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(reccol).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
+	    }
+	    return {"p":sperf,"v":svol,"s":sshrp,"m":smddw,"u":smduw,"mddcol":mddcol};
+	}
+
 	if(end && stats){
 	    var len=subst.length;
 	    if(len>15){
 		for(var i=0;i<ids.length;i++){
 		    if(viss[i]){
-			var perf=0;// annualised perf, here the rbsd case is only for cosmetic purposes
-			if(rbsd) perf=(lst[i]-100)*(252/len); else perf=100*(252/len)*(bld.vec[i][subst[len-1]]/bld.vec[i][subst[0]]-1);// assumes daily data
-			var dlg=new Array(len),l=0,x=0,x2=0;// dlog, vol
-			for(var k=subst[0]+1;k<=subst[len-1];k++){ dlg[l]=(bld.vec[i][k]/bld.vec[i][k-1]-1); x+=dlg[l];x2+=dlg[l]*dlg[l]; l++; }
-			var vol=Math.sqrt(252*(x2-(x*x/len))/(len-1))*100;
-			shrp[i]=(252*100*x/len)/vol;
-			// shrp[i]=perf/vol;
-			
-			//drawdown needs to be computed on all the dlogs
-			var scnt=0,mdd=0,mdds=0,mdde=0,mdu=0,mdus=0,mdue=0;
-			while(scnt<dlg.length){
-			    var comp=dlg[scnt]; // 1rst dlog at date[globalst+scnt]
-			    for(var j=scnt+1;j<dlg.length;j++){ if((comp+dlg[j])<mdd){ mdds=scnt;mdde=j;mdd=(comp+dlg[j]);  } if((comp+dlg[j])>mdu){ mdus=scnt;mdue=j;mdu=(comp+dlg[j]);  } comp+=dlg[j]; }
-			    scnt++;
-			}
-			function cyscl(i){ if(maxis) return myscl[i]; else return yscl; }
-			// draw mdd arrows
-			var vls=bld.vec[i][mdds+subst[0]],vle=bld.vec[i][mdde+subst[0]+1]; if(rbsd){ vls=100*vls/bld.vec[i][subst[0]];vle=100*vle/bld.vec[i][subst[0]]; }
-			var vlus=bld.vec[i][mdus+subst[0]],vlue=bld.vec[i][mdue+subst[0]+1]; if(rbsd){ vlus=100*vlus/bld.vec[i][subst[0]];vlue=100*vlue/bld.vec[i][subst[0]]; }
-			
-			prf[i]=perf; volat[i]=vol; mddw[i]=(vle/vls)-1; mduw[i]=(vlue/vlus)-1; 
-
-			// compute the time to recovery from mdd
-			var hpt=bld.vec[i][mdds+subst[0]],hpti=mdds+subst[0],fnd=false,hgrpt;
-			for(var k=(mdds+subst[0]+1);k<(mdds+subst[len-1]);k++) if(bld.vec[i][k]>hpt){ hpti=k; fnd=true; break; }
-
-			if(rbsd) hgrpt=100*bld.vec[i][hpti]/bld.vec[i][subst[0]]; else hgrpt=bld.vec[i][hpti];
-			if(rbsd) hpt=100*bld.vec[i][mdds+subst[0]]/bld.vec[i][subst[0]]; else hpt=bld.vec[i][mdds+subst[0]];
-
-			if(fnd){
-			    focus.append("circle").attr("class","rec-"+name).attr("cx",xscl(dates[hpti])).attr("cy",cyscl(i)(hgrpt)).attr("r",ratio*10).style("fill",colors[i]).style("opacity",.4).attr("id","cttr-"+name+"-"+i);
-			    focus.append("circle").attr("class","rec2-"+name).attr("cx",xscl(dates[hpti])).attr("cy",cyscl(i)(hgrpt)).attr("r",ratio*4).style("fill",colors[i]).attr("id","cttr2-"+name+"-"+i).style("stroke",cyn);
-
-			    // interval computation and cosmetics
-			    var sttr="",ttre="",ttr=Math.ceil(Math.abs(dates[hpti].getTime()-dates[subst[0]+mdde].getTime())/(1000*3600*24));// time to recovery in days
-			    if(ttr>60){
-				if(ttr>360){
-				    if(Math.round(ttr/360)>1) ttre="s"; else ttre=""; sttr=Math.round(ttr*10/360)/10+" year"+ttre;
-				}else{ if(Math.round(ttr/60)>1) ttre="s"; else ttre=""; sttr=Math.round(ttr*10/60)/10+" month"+ttre; }
-			    }
-			    else{ if(Math.round(ttr)>1) ttre="s"; else ttre=""; sttr=Math.round(ttr*10)/10+" day"+ttre; }
-			    
-			    svg.append("text").attr("class","ttrlab-"+name).attr("x",xscl(dates[hpti])+margin.left-20).attr("y",cyscl(i)(hgrpt)+margin.top-20).attr("id","lttr-"+name+"-"+i)
-			    	.text(sttr).style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(colors[i]).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
-			    //console.log("fnd?:"+fnd+",to beat:"+hpt+", higher pt:"+hgrpt+", ttr:"+dates[hpti]+":"+dates[subst[0]+mdds])
-			}
-
-			// drawdown duration label (peak to trough time)
-			var ddur=Math.ceil(Math.abs(dates[mdde+subst[0]+1].getTime()-dates[mdds+subst[0]].getTime())/(1000*3600*24)),sddur="",ddure="";
-			if(ddur>60){
-			    if(ddur>360){ if(Math.round(ddur/360)>1) ddure="s"; else ddure=""; sddur=Math.round(ddur*10/360)/10+" year"+ddure; }
-			    else{ if(Math.round(ddur/60)>1) ddure="s"; else ddure=""; sddur=Math.round(ddur*10/60)/10+" month"+ddure; }
-			}else{ if(Math.round(ddur)>1) ddure="s"; else ddure=""; sddur=Math.round(ddur*10)/10+" day"+ddure; }
-			svg.append("text").attr("class","mddurlab-"+name).attr("x",xscl(dates[mdds+subst[0]])+margin.left+5).attr("y",cyscl(i)(vls)+margin.top-10).attr("id","lddur-"+name+"-"+i)
-			    .text(sddur).style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(colors[i]).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
-
-			// mdde + 1 because computations are on dlog
-			focus.append("line").attr("class","mdarr-"+name).attr("x1",xscl(dates[mdds+subst[0]])).attr("x2",xscl(dates[mdde+subst[0]+1])).attr("id","larw-"+name+"-"+i)
-				.attr("y1",cyscl(i)(vls)).attr("y2",cyscl(i)(vle)).style("stroke",d3.color(colors[i]).brighter(brgt)).style("stroke-width",2).style("stroke-dasharray","5,5").attr("marker-end","url(#arw-"+name+"-"+i+")");
-			// mdu + 1
-			focus.append("line").attr("class","mduarr-"+name).attr("x1",xscl(dates[mdus+subst[0]])).attr("x2",xscl(dates[mdue+subst[0]+1])).attr("id","laruw-"+name+"-"+i)
-			    .attr("y1",cyscl(i)(vlus)).attr("y2",cyscl(i)(vlue)).style("stroke",d3.color(colors[i]).brighter(brgt)).style("stroke-width",2).style("stroke-dasharray","5,5").attr("marker-end","url(#aruw-"+name+"-"+i+")");
-			// labels below
-			svg.append("text").attr("class","mdlab-"+name).attr("x",xscl(dates[mdde+subst[0]+1])+margin.left-20).attr("y",cyscl(i)(vle)+margin.top+20).attr("id","lbarw-"+name+"-"+i)
-			    .text(Math.round(mddw[i]*100*100)/100+'%').style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(colors[i]).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
-			// labels above
-			svg.append("text").attr("class","mdulab-"+name).attr("x",xscl(dates[mdue+subst[0]+1])+margin.left-20).attr("y",cyscl(i)(vlue)+margin.top-10).attr("id","lbaruw-"+name+"-"+i)
-			    .text(Math.round(mduw[i]*100*100)/100+'%').style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(colors[i]).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
-			    
-			// console.log('new mdd: from:'+bld.rn[mdds+subst[0]]+',to:'+bld.rn[mdde+subst[0]+1]+',mdd:'+Math.round(mdd*100*100)/100+'%');// +1 because computed on dlog
-		    }		    
+			// build rebased array for this series over the visible window
+			var svec=new Array(len); for(var k=0;k<len;k++) svec[k]=rbsd?100*bld.vec[i][subst[k]]/bld.vec[i][subst[0]]:bld.vec[i][subst[k]];
+			var sr=computeStats(svec,len,ist,ied,i,colors[i],cyscl(i),ids.length==1?red:null);
+			prf[i]=sr.p; volat[i]=sr.v; shrp[i]=sr.s; mddw[i]=sr.m; mduw[i]=sr.u; lulu[i]=sr.mddcol;
+		    }
 		}
-	    }else svg.append("text").attr("class","stinfo-"+name).attr("x",margin.left).attr("y",.96*(margin2.top+h2+margin2.bottom)).text("warning: not enough data to compute stats").style("font-family",fontg).style("fill",cyn); //.style("font-size",paxylab)
+		// stats for synthetic series
+		if(gosum && sumvec!=undefined){
+		    var sr=computeStats(sumvec,len,ist,ied,"sum",avgcolor,yscl);
+		    prf["sum"]=sr.p; volat["sum"]=sr.v; shrp["sum"]=sr.s; mddw["sum"]=sr.m; mduw["sum"]=sr.u;
+		}
+		if(goeql252 && eql252vec!=undefined){
+		    var sr=computeStats(eql252vec,len,ist,ied,"eql252",eqlcolor,yscl);
+		    prf["eql252"]=sr.p; volat["eql252"]=sr.v; shrp["eql252"]=sr.s; mddw["eql252"]=sr.m; mduw["eql252"]=sr.u;
+		}
+	    }else svg.append("text").attr("class","stinfo-"+name).attr("x",margin.left).attr("y",.96*(margin2.top+h2+margin2.bottom)).text("warning: not enough data to compute stats").style("font-family",fontg).style("fill",cyn);
 	}
 
 	// ##################### LEGEND SETTER (right-side vertical list, sorted by performance)
-	ids.forEach(function(id,i){ lgds[i]={"id":id,"ix":i,"lp":lst[i],"p":prf[i],"v":volat[i],"m":mddw[i],"u":mduw[i],"s":shrp[i] }; }); function stord(x,y){ return y.lp - x.lp; } lgds.sort(stord);
+	lgds=[];
+	ids.forEach(function(id,i){ lgds.push({"id":id,"ix":i,"lp":lst[i],"p":prf[i],"v":volat[i],"m":mddw[i],"u":mduw[i],"s":shrp[i],"syn":false,"color":colors[i],"mddcol":lulu[i] }); });
+	if(gosum && sumvec!=undefined) lgds.push({"id":"avg","ix":"sum","lp":sumvec[sumvec.length-1],"p":prf["sum"],"v":volat["sum"],"m":mddw["sum"],"u":mduw["sum"],"s":shrp["sum"],"syn":true,"color":avgcolor});
+	if(goeql252 && eql252vec!=undefined) lgds.push({"id":"eql_252","ix":"eql252","lp":eql252vec[eql252vec.length-1],"p":prf["eql252"],"v":volat["eql252"],"m":mddw["eql252"],"u":mduw["eql252"],"s":shrp["eql252"],"syn":true,"color":eqlcolor});
+	function stord(x,y){ return y.lp - x.lp; } lgds.sort(stord);
 
 	d3.select("#legdv-"+name).remove();
 	var legdv=d3.select("#"+name+"-dv").append("div").attr("id","legdv-"+name)
@@ -461,34 +438,41 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 	    .style("max-height",(h+h2+margin.bottom)+"px").style("overflow-y","auto")
 	    .style("font-family",fontg).style("font-size",Math.max(ratio*11,9)+"px");
 
-	ids.forEach(function(id,i){
-	    var row=legdv.append("div").attr("id","lgr-"+name+"-"+lgds[i].ix).style("padding","2px 4px").style("cursor","pointer")
-		.style("opacity",function(){ return viss[lgds[i].ix]?1:.4; }).style("white-space","nowrap");
+	lgds.forEach(function(lg,i){
+	    var row=legdv.append("div").attr("id","lgr-"+name+"-"+lg.ix).style("padding","2px 4px").style("cursor","pointer")
+		.style("opacity",function(){ if(lg.syn) return 1; return viss[lg.ix]?1:.4; }).style("white-space","nowrap");
 	    row.append("span").style("display","inline-block").style("width","10px").style("height","10px")
-		.style("background",colors[lgds[i].ix]).style("margin-right","5px").style("vertical-align","middle");
-	    var ltxt=lgds[i].id+' ('+Math.round(lgds[i].lp*10)/10+')';
-	    if(stats && prf[lgds[i].ix]!=undefined) ltxt=lgds[i].id+' ('+Math.round(lgds[i].lp*10)/10+'): '+Math.round(100*lgds[i].p)/100+'% | '+Math.round(lgds[i].v*100)/100+'% | '+Math.round(100*lgds[i].s)/100+' | '+Math.round(lgds[i].m*100*100)/100+'%';
-	    row.append("span").text(ltxt).style("color",colors[lgds[i].ix]);
+		.style("background",lg.color).style("margin-right","5px").style("vertical-align","middle");
+	    if(stats && lg.p!=undefined && lg.mddcol){
+		row.append("span").text(lg.id+' ('+Math.round(lg.lp*10)/10+'): '+Math.round(100*lg.p)/100+'% | '+Math.round(lg.v*100)/100+'% | '+Math.round(100*lg.s)/100+' | ').style("color",lg.color);
+		row.append("span").text(Math.round(lg.m*100*100)/100+'%').style("color",lg.mddcol);
+		row.append("span").text(' | '+Math.round(lg.u*100*100)/100+'% | ').style("color",lg.color);
+		row.append("span").text(Math.round(100*100*lg.m/lg.v)/100).style("color",lg.mddcol);
+	    }else{
+		var ltxt=lg.id+' ('+Math.round(lg.lp*10)/10+')';
+		if(stats && lg.p!=undefined) ltxt=lg.id+' ('+Math.round(lg.lp*10)/10+'): '+Math.round(100*lg.p)/100+'% | '+Math.round(lg.v*100)/100+'% | '+Math.round(100*lg.s)/100+' | '+Math.round(lg.m*100*100)/100+'% | '+Math.round(lg.u*100*100)/100+'% | '+Math.round(100*100*lg.m/lg.v)/100;
+		row.append("span").text(ltxt).style("color",lg.color);
+	    }
 
 	    row.on("mouseover",function(){
-		svg.selectAll(".mdlab-"+name).style("opacity",.2); svg.select("#lbarw-"+name+"-"+lgds[i].ix).style("opacity",1);
-		focus.selectAll(".mdarr-"+name).style("opacity",.2); focus.select("#larw-"+name+"-"+lgds[i].ix).style("opacity",1).style("stroke-width",3);
-		svg.selectAll(".mdulab-"+name).style("opacity",.2); svg.select("#lbaruw-"+name+"-"+lgds[i].ix).style("opacity",1);
-		focus.selectAll(".mduarr-"+name).style("opacity",.2); focus.select("#laruw-"+name+"-"+lgds[i].ix).style("opacity",1).style("stroke-width",3);
-		svg.selectAll(".mddurlab-"+name).style("opacity",.2); svg.select("#lddur-"+name+"-"+lgds[i].ix).style("opacity",1);
-		focus.selectAll(".line").style("opacity",.2); focus.select("#ln-"+name+"-"+lgds[i].ix).style("stroke-width",4).style("opacity",1);
+		svg.selectAll(".mdlab-"+name).style("opacity",.2); svg.select("#lbarw-"+name+"-"+lg.ix).style("opacity",1);
+		focus.selectAll(".mdarr-"+name).style("opacity",.2); focus.select("#larw-"+name+"-"+lg.ix).style("opacity",1).style("stroke-width",3);
+		svg.selectAll(".mdulab-"+name).style("opacity",.2); svg.select("#lbaruw-"+name+"-"+lg.ix).style("opacity",1);
+		focus.selectAll(".mduarr-"+name).style("opacity",.2); focus.select("#laruw-"+name+"-"+lg.ix).style("opacity",1).style("stroke-width",3);
+		svg.selectAll(".mddurlab-"+name).style("opacity",.2); svg.select("#lddur-"+name+"-"+lg.ix).style("opacity",1);
+		focus.selectAll(".line").style("opacity",.2); focus.select("#ln-"+name+"-"+lg.ix).style("stroke-width",4).style("opacity",1);
 		focus.selectAll(".rec2-"+name).style("opacity",.2); focus.selectAll(".rec-"+name).style("opacity",.2);
-		focus.select("#cttr-"+name+"-"+lgds[i].ix).style("opacity",.6);
-		svg.selectAll(".ttrlab-"+name).style("opacity",.2); svg.select("#lttr-"+name+"-"+lgds[i].ix).style("opacity",1);
+		focus.select("#cttr-"+name+"-"+lg.ix).style("opacity",.6);
+		svg.selectAll(".ttrlab-"+name).style("opacity",.2); svg.select("#lttr-"+name+"-"+lg.ix).style("opacity",1);
 	    })
 	    .on("mouseout",function(){
 		focus.selectAll(".mdlab-"+name).style("opacity",1);focus.selectAll(".mdarr-"+name).style("opacity",1);svg.selectAll(".mdlab-"+name).style("opacity",1);
 		svg.selectAll(".mddurlab-"+name).style("opacity",1);
-		focus.selectAll(".line").style("opacity",1); focus.select("#ln-"+name+"-"+lgds[i].ix).style("stroke-width",2);
-		focus.select("#larw-"+name+"-"+lgds[i].ix).style("stroke-width",2);
+		focus.selectAll(".line").style("opacity",1); focus.select("#ln-"+name+"-"+lg.ix).style("stroke-width",2);
+		focus.select("#larw-"+name+"-"+lg.ix).style("stroke-width",2);
 		focus.selectAll(".rec2-"+name).style("opacity",1); focus.selectAll(".rec-"+name).style("opacity",.4); svg.selectAll(".ttrlab-"+name).style("opacity",1);
 	    })
-	    .on("click",function(){ viss[lgds[i].ix]=!viss[lgds[i].ix]; svg.selectAll(".ttrlab-"+name).remove();focus.selectAll(".pan").remove(); graphit(ist,ied,false,true); });
+	    .on("click",function(){ if(!lg.syn){ viss[lg.ix]=!viss[lg.ix]; svg.selectAll(".ttrlab-"+name).remove();focus.selectAll(".pan").remove(); graphit(ist,ied,false,true); } });
 	});
 
 	// MOUSE TRACKER (on brush end)
