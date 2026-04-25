@@ -6,8 +6,8 @@ GRN="\033[0;32m"
 CYN="\033[0;36m"
 NC="\033[0m"
 
-help=false; outfile=out.html; filein=datatest.csv; ylabel="level"; title="Graphity"; source="source: Bloomberg"; rebase=false; maxis=false; stats=false; name="gph1"; ninit=false;
-width=0.8; height=0.5; # h is 0.5 as a measure of width (better if we have a scrollable page div sizing may break everything otherwise
+help=false; outfile=out.html; filein=datatest.csv; ylabel="level"; title="Graphity"; source="source: Blisp"; rebase=false; maxis=false; stats=false; name="gph1"; ninit=false;
+width=0.8; height=0.5; # h is 0.5 as of width
 
 hlp="\n${RED}**************** GRAPHITYR HELPER ********************${NC}\n\n${CYN}general options
 :\n -fi or none: csv input to plot\n -nm or --name: for the name of the graphity (important if multi graphity)\n -t or --title: for the main title of the graphity, none will result in tilted upward graph\n -src or --source: source of the graphity\n -w or --width: width ratio of the graphity [DEFAULT 0.8]\n -h or --height: height ratio as of width [DEFAULT 0.5 (0.5*w)] --rebase or --rb: rebased or not\n --maxis or --mx: multiple axis graphity\n --stat or --summary: statistics for the timeseries plotted (assume daily series for now)\n -n or --no-init or -nini: when d3 and graphity are already included in the page\n\n${GRN}example:\n graphityr -fi test.csv --rb --stat${NC}\n"
@@ -91,12 +91,12 @@ echo -n "var $2dt="
 }
 
 if [ $help = false ]; then
-calib="var ww=window.innerWidth*"$width";\nvar wh=Math.round("$height"*ww);";
+calib="var _el=document.getElementById('"$name"'); var ww=(_el?_el.offsetWidth:window.innerWidth)*"$width";\nvar wh=Math.round("$height"*ww);";
 data="<script>"$(csvtobld <(cat $tmp) "$name")"</script>"
 # data="<script>"$(csvtobldbu <(cat $tmp) "$name")"</script>"
 
 if [ $ninit = false ]; then
-style="svg{background-color:#ffffff}
+style="svg{background-color:#0f0f0f}
 .line{fill:none}\n.line2{fill:none}
 input[type=checkbox]{display:none}
 input[type=checkbox]:checked+label:before{content:\"\2611\";margin-right:3px; }

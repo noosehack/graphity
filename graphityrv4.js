@@ -65,14 +65,14 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 
     
     // colors
-    if(bg==undefined)  var bg="#ffffff";  if(fg==undefined)  var fg="#47525C";  if(red==undefined) var red="#C00000";
-    if(grn==undefined) var grn="#006600"; if(ylw==undefined) var ylw="#CC8C00"; if(blu==undefined) var blu="#002060";
-    if(mag==undefined) var mag="#7BB8D9"; if(cyn==undefined) var cyn="#7F7F7F"; if(wht==undefined) var wht="#dbd7b8";
-    if(bwht==undefined) var bwht="#dfdfdf";    
-    var avgcolor="#999999",eqlcolor="#E8740C";
-    var colors=[blu,"#6A0DAD","#0097A7","#C71585","#4682B4",mag,"#20B2AA","#8B008B","#003893","#008B8B","#CD853F","#50BFE6","#2F4F4F","#9C27B0","#00838F","#5D4037","#1565C0","#6D4C41","#00695C","#7B1FA2","#0277BD","#4527A0","#00796B","#283593","#00579B","#4A148C"];
+    if(bg==undefined)  var bg="#0f0f0f";  if(fg==undefined)  var fg="#d0d0d0";  if(red==undefined) var red="#ef4444";
+    if(grn==undefined) var grn="#22c55e"; if(ylw==undefined) var ylw="#eab308"; if(blu==undefined) var blu="#60a5fa";
+    if(mag==undefined) var mag="#a78bfa"; if(cyn==undefined) var cyn="#9ca3af"; if(wht==undefined) var wht="#e5e7eb";
+    if(bwht==undefined) var bwht="#f3f4f6";
+    var avgcolor="#d1d5db",eqlcolor="#fb923c";
+    var colors=[blu,"#c084fc","#22d3ee","#f472b6","#38bdf8",mag,"#2dd4bf","#e879f9","#6366f1","#06b6d4","#fbbf24","#67e8f9","#94a3b8","#a855f7","#14b8a6","#a8a29e","#3b82f6","#d6d3d1","#10b981","#8b5cf6","#0ea5e9","#7c3aed","#059669","#6366f1","#0284c7","#9333ea"];
 
-    var cynd=d3.hsl(cyn).darker(2);
+    var cynd=d3.hsl(cyn).brighter(1);
     // put mag instead of bg and "#B7E500" for ylw
     var brgt=1.5;// how much brighter should the arrows and labels be
 
@@ -86,7 +86,8 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
     if(title=="") mg[0]=hgt*.08;
 
     // initialize dimensions and margins
-    var svg=d3.select("#"+name+"-dv").append("svg").attr("id",name+"-svg").attr("width",wth).attr("height",hgt)//.attr("clip-path", "url(#clip)");;//.style("border","1px solid black"),
+    d3.select("#"+name+"-dv").append("div").attr("id",name+"-wrap").style("position","relative").style("overflow","visible");
+    var svg=d3.select("#"+name+"-wrap").append("svg").attr("id",name+"-svg").attr("width",wth).attr("height",hgt)//.attr("clip-path", "url(#clip)");;//.style("border","1px solid black"),
 	margin={top:mg[0],right:mg[1],bottom:mg[2],left:mg[3]},margin2={top:mg2[0],right:mg2[1],bottom:mg2[2],left:mg2[3]};
     h=hgt-margin.top-margin.bottom,h2=hgt-margin2.top-margin2.bottom,w=wth-margin.left-margin.right;
     // focus axis-y lab size, prev axis-y labsize ... etc, source lab size, options (chkboxes lab size), title lab size, legend lab size
@@ -94,12 +95,23 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
     // var faxylab="1.1em",paxylab="1.1em",faxxlab="1.1em",paxxlab="1.1em",srclab="1.8em",optlab="1.3em",titlab="2.1em",leglab="1em",arrwlab="1em";
 
     // calibrate fonts accordingly
-    var ratio=1.2*wth/window.innerWidth;
-    var faxylab=(Math.round(1.5*ftrat*ratio*10)/10)+"em",faxxlab=(Math.round(1.5*ftrat*ratio*10)/10)+"em";
-    var paxxlab=(Math.round(1.3*ftrat*ratio*10)/10)+"em",paxylab=(Math.round(1.3*ftrat*ratio*10)/10)+"em",srclab=(Math.round(2.4*ftrat*ratio*10)/10)+"em",optlab=(Math.round(1.4*ftrat*ratio*10)/10)+"em"
-    var titlab=(Math.round(2.4*ftrat*ratio*10)/10)+"em",leglab=(Math.round(1.05*ftrat*ratio*10)/10)+"em",arrwlab=(Math.round(1.2*ftrat*ratio*10)/10)+"em";
+    if(ftrat==undefined) ftrat=1;
+    var ratio=1.2*wth/(window.innerWidth||wth);
+    var faxylab=(Math.round(0.9*ftrat*ratio*10)/10)+"em",faxxlab=(Math.round(0.9*ftrat*ratio*10)/10)+"em";
+    var paxxlab=(Math.round(0.8*ftrat*ratio*10)/10)+"em",paxylab=(Math.round(0.8*ftrat*ratio*10)/10)+"em",srclab=(Math.round(1.2*ftrat*ratio*10)/10)+"em",optlab=(Math.round(0.9*ftrat*ratio*10)/10)+"em"
+    var titlab=(Math.round(1.4*ftrat*ratio*10)/10)+"em",leglab=(Math.round(0.8*ftrat*ratio*10)/10)+"em",arrwlab=(Math.round(0.55*ftrat*ratio*10)/10)+"em";
     var fontax="Helvetica", fontg="Calibri";
-    
+
+    d3.select("#"+name+"-dv").style("background",bg).style("padding-bottom","0.5em").style("border-radius","4px");
+    d3.select("#"+name+"-dv").insert("div","#"+name+"-wrap").attr("id","legdv-"+name)
+	.style("display","flex").style("flex-wrap","wrap").style("gap","2px 8px").style("padding","4px 6px")
+	.style("background",bg).style("border","1px solid "+cyn).style("border-radius","4px").style("margin-bottom","4px")
+	.style("font-family",fontg);
+    d3.select("#"+name+"-dv").insert("div","#"+name+"-wrap").attr("id","statdv-"+name)
+	.style("display","none").style("margin-bottom","4px")
+	.style("background",bg).style("border","1px solid "+cyn).style("border-radius","4px")
+	.style("padding","4px 8px").style("font-family",fontg).style("color",fg);
+
     // main chart areas + definitions (clip-path and arrow heads for mdd)
     svg.append("defs").append("clipPath").attr("id","clip").append("rect").attr("width",w).attr("height",h).style("border","1px solid black");
     svg.append("defs").selectAll("marker").data(ids).enter().append("svg:marker").attr("id",function(d,i){ return "arw-"+name+"-"+i; })
@@ -114,7 +126,7 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 
     // ########################### INPUTS (CHECKBOXES AND DATES + RELOAD BUTTON)
     // building the div for inputs
-     d3.select("#"+name+"-dv").append("div").attr("id","chkdv-"+name).style("position","absolute")
+     d3.select("#"+name+"-wrap").append("div").attr("id","chkdv-"+name).style("position","absolute")
 	.style("top",(h+margin.bottom+margin.top/2)+"px").style("left",margin.left+"px").style("width",w+"px");
     // building the checkboxes
     d3.select("#chkdv-"+name).append("input").attr("type","checkbox").attr("class","box-"+name).attr("id","rb-"+name).on("click",function(){ rbsd=!rbsd; graphit(st,ed,false,true); });
@@ -135,8 +147,8 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
     // style checkboxes and labels
     //d3.selectAll(".tbox").style("font-size","1.2em").style("cursor","pointer").style("color",cyn);
     d3.selectAll(".lab-"+name).style("color",cyn).style("font-family",fontg).style("font-size",optlab).style("cursor","pointer");
-    d3.select(".rlab-"+name).style("color",cyn).style("font-size",(Math.round(1.2*ftrat*ratio*10)/10)+"em").style("cursor","pointer");
-     d3.select(".dlab-"+name).style("color",cyn).style("font-size",(Math.round(1.2*ftrat*ratio*10)/10)+"em").style("cursor","pointer");
+    d3.select(".rlab-"+name).style("color",cyn).style("font-size",(Math.round(0.9*ftrat*ratio*10)/10)+"em").style("cursor","pointer");
+     d3.select(".dlab-"+name).style("color",cyn).style("font-size",(Math.round(0.9*ftrat*ratio*10)/10)+"em").style("cursor","pointer");
     // building the date inputs
     d3.select("#chkdv-"+name).append("div").attr("id","inp-"+name);
     // getting date range from input
@@ -165,7 +177,7 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 	for(var i=0;i<bld.rn.length;i++){ if(bld.vec[k][i]>rmax) rmax=bld.vec[k][i]; ddvec[k][i]=(bld.vec[k][i]/rmax)-1; if(ddvec[k][i]<ddmin) ddmin=ddvec[k][i]; }
     }
     // legends variables
-    var prf=new Array(ids.length),volat=new Array(ids.length),mddw=new Array(ids.length),mduw=new Array(ids.length),shrp=new Array(ids.length),lulu=new Array(ids.length),lgds=[],viss=[]; for(var i=0;i<ids.length;i++){ viss[i]=true;  }// legends and visible series
+    var prf=new Array(ids.length),volat=new Array(ids.length),mddw=new Array(ids.length),shrp=new Array(ids.length),lulu=new Array(ids.length),lgds=[],viss=[]; for(var i=0;i<ids.length;i++){ viss[i]=true;  }// legends and visible series
 
     // ########################### TITLE AND SOURCE
     if(title!=""){
@@ -182,7 +194,7 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
     function graphit(ist,ied,init,end){
 	// First remove all the previously drawn lines
 	focus.selectAll(".line").remove(); focus.selectAll(".axis-y").remove(); focus.selectAll(".grd").remove(); svg.selectAll(".leg").remove(); svg.selectAll(".legl").remove();
-	focus.selectAll(".mdarr-"+name).remove(); svg.selectAll(".mdlab-"+name).remove(); focus.selectAll(".mduarr-"+name).remove(); svg.selectAll(".mdulab-"+name).remove(); svg.selectAll(".mddurlab-"+name).remove();
+	focus.selectAll(".mdarr-"+name).remove(); svg.selectAll(".mdlab-"+name).remove(); svg.selectAll(".mddurlab-"+name).remove();
 	svg.selectAll(".stinfo-"+name).remove();focus.selectAll(".pan").remove();
 	svg.selectAll(".ttrlab-"+name).remove(); focus.selectAll(".rec-"+name).remove(); focus.selectAll(".rec2-"+name).remove();
 	
@@ -373,21 +385,17 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 	    var svol=Math.sqrt(252*(x2-(x*x/len))/(len-1))*100;
 	    var sperf=(vec[len-1]/vec[0]-1)*100*(252/len);
 	    var sshrp=(252*100*x/len)/svol;
-	    var scnt=0,mdd=0,mdds=0,mdde=0,mdu=0,mdus=0,mdue=0;
-	    while(scnt<l){ var comp=dlg[scnt]; for(var j=scnt+1;j<l;j++){ if((comp+dlg[j])<mdd){ mdds=scnt;mdde=j;mdd=(comp+dlg[j]); } if((comp+dlg[j])>mdu){ mdus=scnt;mdue=j;mdu=(comp+dlg[j]); } comp+=dlg[j]; } scnt++; }
-	    var vls=vec[mdds],vle=vec[mdde+1]; var smddw=(vle/vls)-1; var vlus=vec[mdus],vlue=vec[mdue+1]; var smduw=(vlue/vlus)-1;
-	    // draw mdd/mdu arrows and labels
+	    var scnt=0,mdd=0,mdds=0,mdde=0;
+	    while(scnt<l){ var comp=dlg[scnt]; for(var j=scnt+1;j<l;j++){ if((comp+dlg[j])<mdd){ mdds=scnt;mdde=j;mdd=(comp+dlg[j]); } comp+=dlg[j]; } scnt++; }
+	    var vls=vec[mdds],vle=vec[mdde+1]; var smddw=(vle/vls)-1;
+	    // draw mdd arrows and labels
 	    var ddur=Math.ceil(Math.abs(dates[ist_+mdde+1].getTime()-dates[ist_+mdds].getTime())/(1000*3600*24));
 	    svg.append("text").attr("class","mddurlab-"+name).attr("x",xscl(dates[ist_+mdds])+margin.left+5).attr("y",syf(vls)+margin.top-10).attr("id","lddur-"+name+"-"+sid)
 		.text(fmtdur(ddur)).style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(mddcol).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
 	    focus.append("line").attr("class","mdarr-"+name).attr("x1",xscl(dates[ist_+mdds])).attr("x2",xscl(dates[ist_+mdde+1])).attr("id","larw-"+name+"-"+sid)
 		.attr("y1",syf(vls)).attr("y2",syf(vle)).style("stroke",d3.color(mddcol).brighter(brgt)).style("stroke-width",2).style("stroke-dasharray","5,5");
-	    focus.append("line").attr("class","mduarr-"+name).attr("x1",xscl(dates[ist_+mdus])).attr("x2",xscl(dates[ist_+mdue+1])).attr("id","laruw-"+name+"-"+sid)
-		.attr("y1",syf(vlus)).attr("y2",syf(vlue)).style("stroke",d3.color(scolor).brighter(brgt)).style("stroke-width",2).style("stroke-dasharray","5,5");
 	    svg.append("text").attr("class","mdlab-"+name).attr("x",xscl(dates[ist_+mdde+1])+margin.left-20).attr("y",syf(vle)+margin.top+20).attr("id","lbarw-"+name+"-"+sid)
 		.text(Math.round(smddw*100*100)/100+'%').style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(mddcol).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
-	    svg.append("text").attr("class","mdulab-"+name).attr("x",xscl(dates[ist_+mdue+1])+margin.left-20).attr("y",syf(vlue)+margin.top-10).attr("id","lbaruw-"+name+"-"+sid)
-		.text(Math.round(smduw*100*100)/100+'%').style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(scolor).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
 	    // time to recovery
 	    var hpt=vec[mdds],hpti=mdds,fnd=false;
 	    for(var k=mdds+1;k<len;k++) if(vec[k]>hpt){ hpti=k; fnd=true; break; }
@@ -399,7 +407,7 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 		svg.append("text").attr("class","ttrlab-"+name).attr("x",xscl(dates[ist_+hpti])+margin.left-20).attr("y",syf(vec[hpti])+margin.top-20).attr("id","lttr-"+name+"-"+sid)
 		    .text(fmtdur(ttr)).style("font-family",fontg).style("font-size",arrwlab).style("font-weight","bold").style("fill",d3.color(reccol).brighter(brgt)).style("stroke",fg).style("stroke-width",.5);
 	    }
-	    return {"p":sperf,"v":svol,"s":sshrp,"m":smddw,"u":smduw,"mddcol":mddcol};
+	    return {"p":sperf,"v":svol,"s":sshrp,"m":smddw,"mddcol":mddcol};
 	}
 
 	if(end && stats){
@@ -410,55 +418,41 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 			// build rebased array for this series over the visible window
 			var svec=new Array(len); for(var k=0;k<len;k++) svec[k]=rbsd?100*bld.vec[i][subst[k]]/bld.vec[i][subst[0]]:bld.vec[i][subst[k]];
 			var sr=computeStats(svec,len,ist,ied,i,colors[i],cyscl(i),ids.length==1?red:null);
-			prf[i]=sr.p; volat[i]=sr.v; shrp[i]=sr.s; mddw[i]=sr.m; mduw[i]=sr.u; lulu[i]=sr.mddcol;
+			prf[i]=sr.p; volat[i]=sr.v; shrp[i]=sr.s; mddw[i]=sr.m; lulu[i]=sr.mddcol;
 		    }
 		}
 		// stats for synthetic series
 		if(gosum && sumvec!=undefined){
 		    var sr=computeStats(sumvec,len,ist,ied,"sum",avgcolor,yscl);
-		    prf["sum"]=sr.p; volat["sum"]=sr.v; shrp["sum"]=sr.s; mddw["sum"]=sr.m; mduw["sum"]=sr.u;
+		    prf["sum"]=sr.p; volat["sum"]=sr.v; shrp["sum"]=sr.s; mddw["sum"]=sr.m;
 		}
 		if(goeql252 && eql252vec!=undefined){
 		    var sr=computeStats(eql252vec,len,ist,ied,"eql252",eqlcolor,yscl);
-		    prf["eql252"]=sr.p; volat["eql252"]=sr.v; shrp["eql252"]=sr.s; mddw["eql252"]=sr.m; mduw["eql252"]=sr.u;
+		    prf["eql252"]=sr.p; volat["eql252"]=sr.v; shrp["eql252"]=sr.s; mddw["eql252"]=sr.m;
 		}
 	    }else svg.append("text").attr("class","stinfo-"+name).attr("x",margin.left).attr("y",.96*(margin2.top+h2+margin2.bottom)).text("warning: not enough data to compute stats").style("font-family",fontg).style("fill",cyn);
 	}
 
-	// ##################### LEGEND SETTER (right-side vertical list, sorted by performance)
+	// ##################### LEGEND SETTER (flex row at top, seewave-style)
 	lgds=[];
-	ids.forEach(function(id,i){ lgds.push({"id":id,"ix":i,"lp":lst[i],"p":prf[i],"v":volat[i],"m":mddw[i],"u":mduw[i],"s":shrp[i],"syn":false,"color":colors[i],"mddcol":lulu[i] }); });
-	if(gosum && sumvec!=undefined) lgds.push({"id":"avg","ix":"sum","lp":sumvec[sumvec.length-1],"p":prf["sum"],"v":volat["sum"],"m":mddw["sum"],"u":mduw["sum"],"s":shrp["sum"],"syn":true,"color":avgcolor});
-	if(goeql252 && eql252vec!=undefined) lgds.push({"id":"eql_252","ix":"eql252","lp":eql252vec[eql252vec.length-1],"p":prf["eql252"],"v":volat["eql252"],"m":mddw["eql252"],"u":mduw["eql252"],"s":shrp["eql252"],"syn":true,"color":eqlcolor});
+	ids.forEach(function(id,i){ lgds.push({"id":id,"ix":i,"lp":lst[i],"p":prf[i],"v":volat[i],"m":mddw[i],"s":shrp[i],"syn":false,"color":colors[i],"mddcol":lulu[i] }); });
+	if(gosum && sumvec!=undefined) lgds.push({"id":"avg","ix":"sum","lp":sumvec[sumvec.length-1],"p":prf["sum"],"v":volat["sum"],"m":mddw["sum"],"s":shrp["sum"],"syn":true,"color":avgcolor});
+	if(goeql252 && eql252vec!=undefined) lgds.push({"id":"eql_252","ix":"eql252","lp":eql252vec[eql252vec.length-1],"p":prf["eql252"],"v":volat["eql252"],"m":mddw["eql252"],"s":shrp["eql252"],"syn":true,"color":eqlcolor});
 	function stord(x,y){ return y.lp - x.lp; } lgds.sort(stord);
 
-	d3.select("#legdv-"+name).remove();
-	var legdv=d3.select("#"+name+"-dv").append("div").attr("id","legdv-"+name)
-	    .style("position","absolute").style("top",margin.top+"px").style("left",(margin.left+w+10)+"px")
-	    .style("max-height",(h+h2+margin.bottom)+"px").style("overflow-y","auto")
-	    .style("font-family",fontg).style("font-size",Math.max(ratio*11,9)+"px");
-
+	var legdv=d3.select("#legdv-"+name);
+	legdv.selectAll("*").remove();
 	lgds.forEach(function(lg,i){
-	    var row=legdv.append("div").attr("id","lgr-"+name+"-"+lg.ix).style("padding","2px 4px").style("cursor","pointer")
-		.style("opacity",function(){ if(lg.syn) return 1; return viss[lg.ix]?1:.4; }).style("white-space","nowrap");
-	    row.append("span").style("display","inline-block").style("width","10px").style("height","10px")
-		.style("background",lg.color).style("margin-right","5px").style("vertical-align","middle");
-	    if(stats && lg.p!=undefined && lg.mddcol){
-		row.append("span").text(lg.id+' ('+Math.round(lg.lp*10)/10+'): '+Math.round(100*lg.p)/100+'% | '+Math.round(lg.v*100)/100+'% | '+Math.round(100*lg.s)/100+' | ').style("color",lg.color);
-		row.append("span").text(Math.round(lg.m*100*100)/100+'%').style("color",lg.mddcol);
-		row.append("span").text(' | '+Math.round(lg.u*100*100)/100+'% | ').style("color",lg.color);
-		row.append("span").text(Math.round(100*100*lg.m/lg.v)/100).style("color",lg.mddcol);
-	    }else{
-		var ltxt=lg.id+' ('+Math.round(lg.lp*10)/10+')';
-		if(stats && lg.p!=undefined) ltxt=lg.id+' ('+Math.round(lg.lp*10)/10+'): '+Math.round(100*lg.p)/100+'% | '+Math.round(lg.v*100)/100+'% | '+Math.round(100*lg.s)/100+' | '+Math.round(lg.m*100*100)/100+'% | '+Math.round(lg.u*100*100)/100+'% | '+Math.round(100*100*lg.m/lg.v)/100;
-		row.append("span").text(ltxt).style("color",lg.color);
-	    }
-
-	    row.on("mouseover",function(){
+	    var item=legdv.append("div").style("display","flex").style("align-items","center").style("gap","3px")
+		.style("cursor","pointer").style("padding","1px 4px").style("border-radius","3px")
+		.style("opacity",lg.syn?1:(viss[lg.ix]?1:.4));
+	    item.append("span").style("width","8px").style("height","8px").style("min-width","8px")
+		.style("border-radius","50%").style("background",lg.color);
+	    item.append("span").text(lg.id+" ("+Math.round(lg.lp*10)/10+")")
+		.style("color",lg.color).style("font-size","0.82em").style("white-space","nowrap");
+	    item.on("mouseover",function(){
 		svg.selectAll(".mdlab-"+name).style("opacity",.2); svg.select("#lbarw-"+name+"-"+lg.ix).style("opacity",1);
 		focus.selectAll(".mdarr-"+name).style("opacity",.2); focus.select("#larw-"+name+"-"+lg.ix).style("opacity",1).style("stroke-width",3);
-		svg.selectAll(".mdulab-"+name).style("opacity",.2); svg.select("#lbaruw-"+name+"-"+lg.ix).style("opacity",1);
-		focus.selectAll(".mduarr-"+name).style("opacity",.2); focus.select("#laruw-"+name+"-"+lg.ix).style("opacity",1).style("stroke-width",3);
 		svg.selectAll(".mddurlab-"+name).style("opacity",.2); svg.select("#lddur-"+name+"-"+lg.ix).style("opacity",1);
 		focus.selectAll(".line").style("opacity",.2); focus.select("#ln-"+name+"-"+lg.ix).style("stroke-width",4).style("opacity",1);
 		focus.selectAll(".rec2-"+name).style("opacity",.2); focus.selectAll(".rec-"+name).style("opacity",.2);
@@ -474,6 +468,28 @@ function graphity(name,bld,wth,hgt,title,src,rbsd,maxis,stats,ftrat){
 	    })
 	    .on("click",function(){ if(!lg.syn){ viss[lg.ix]=!viss[lg.ix]; svg.selectAll(".ttrlab-"+name).remove();focus.selectAll(".pan").remove(); graphit(ist,ied,false,true); } });
 	});
+
+	// stats table (separate grid below legend)
+	var statdv=d3.select("#statdv-"+name);
+	statdv.selectAll("*").remove();
+	if(stats && lgds.length>0 && lgds[0].p!=undefined){
+	    statdv.style("display","grid").style("grid-template-columns","minmax(60px,auto) repeat(5,1fr)").style("gap","1px 8px").style("font-size","0.78em");
+	    ["","Perf%","Vol%","Sharpe","MDD%","MDD/V"].forEach(function(hdr){
+		statdv.append("div").text(hdr).style("color",cyn).style("font-weight","bold").style("padding","2px 0").style("border-bottom","1px solid "+cyn);
+	    });
+	    lgds.forEach(function(lg){
+		if(lg.p===undefined) return;
+		var mc=lg.mddcol||lg.color;
+		statdv.append("div").text(lg.id).style("color",lg.color).style("padding","1px 0").style("white-space","nowrap");
+		statdv.append("div").text(Math.round(100*lg.p)/100).style("color",lg.color).style("padding","1px 0");
+		statdv.append("div").text(Math.round(100*lg.v)/100).style("color",lg.color).style("padding","1px 0");
+		statdv.append("div").text(Math.round(100*lg.s)/100).style("color",lg.color).style("padding","1px 0");
+		statdv.append("div").text(Math.round(lg.m*100*100)/100).style("color",mc).style("padding","1px 0");
+		statdv.append("div").text(Math.round(100*100*lg.m/lg.v)/100).style("color",mc).style("padding","1px 0");
+	    });
+	}else{
+	    statdv.style("display","none");
+	}
 
 	// MOUSE TRACKER (on brush end)
 	if(end){
